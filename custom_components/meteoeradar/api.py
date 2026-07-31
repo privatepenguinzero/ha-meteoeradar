@@ -17,23 +17,30 @@ from .const import (
     APP_API_VERSION,
     APP_APPLICATION,
     DEFAULT_HEADERS,
+    FALLBACK_LANGUAGE,
+    LANGUAGE_AUTO,
+    LANGUAGE_REGIONS,
     LOC_ALTITUDE,
     LOC_ASTRO_LATITUDE,
     LOC_ASTRO_LONGITUDE,
     LOC_GRID_LATITUDE,
     LOC_GRID_LONGITUDE,
+    LOC_ISO_COUNTRY,
     LOC_KEY,
     LOC_LATITUDE,
     LOC_LOCATION_ID,
     LOC_LONGITUDE,
     LOC_NAME,
     LOC_TIMEZONE,
+    PATH_AQI,
     PATH_ASTRO,
     PATH_FORECAST,
     PATH_GEOCODING,
     PATH_GEOKEYCODING,
+    PATH_POLLEN,
     PATH_REVERSE_GEOCODING,
     PATH_SHORTCAST,
+    POLLEN_LANGUAGE,
     REQUEST_TIMEOUT,
     WEB_API_BASE,
     WEB_API_TOKEN,
@@ -69,6 +76,7 @@ class MeteoERadarLocation:
     grid_longitude: str | None = None
     astro_latitude: str | None = None
     astro_longitude: str | None = None
+    iso_country_code: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Serializza per il salvataggio nella config entry."""
@@ -84,6 +92,7 @@ class MeteoERadarLocation:
             LOC_GRID_LONGITUDE: self.grid_longitude,
             LOC_ASTRO_LATITUDE: self.astro_latitude,
             LOC_ASTRO_LONGITUDE: self.astro_longitude,
+            LOC_ISO_COUNTRY: self.iso_country_code,
         }
 
     @classmethod
@@ -101,6 +110,7 @@ class MeteoERadarLocation:
             grid_longitude=data.get(LOC_GRID_LONGITUDE),
             astro_latitude=data.get(LOC_ASTRO_LATITUDE),
             astro_longitude=data.get(LOC_ASTRO_LONGITUDE),
+            iso_country_code=data.get(LOC_ISO_COUNTRY),
         )
 
     @classmethod
@@ -131,6 +141,7 @@ class MeteoERadarLocation:
             grid_longitude=grid.get("gridLongitude"),
             astro_latitude=astro.get("gridLatitude"),
             astro_longitude=astro.get("gridLongitude"),
+            iso_country_code=geo.get("iso-3166-1"),
         )
 
 
@@ -143,6 +154,31 @@ def _display_name(payload: dict[str, Any]) -> str:
     if secondary:
         return f"{primary} ({', '.join(secondary)})"
     return str(primary)
+
+
+def resolve_locale(
+    configured: str | None,
+    hass_language: str | None,
+    hass_country: str | None,
+) -> tuple[str, str]:
+    """Determina lingua e regione da usare con le API.
+
+    ``configured`` e' la scelta dell'utente (``auto``/``it``/``en``); con
+    ``auto`` si segue la lingua di Home Assistant, qualunque essa sia — il
+    backend ripiega sull'inglese per i codici che non conosce.
+
+    La regione viene dal paese configurato in Home Assistant perche' orienta la
+    ricerca geografica: cercare "Milano" con ``region=GB`` restituisce una
+    localita' in Texas.
+    """
+    language = (configured or LANGUAGE_AUTO).strip().lower()
+    if language in ("", LANGUAGE_AUTO):
+        language = (hass_language or FALLBACK_LANGUAGE).split("-")[0].lower()
+    if not language:
+        language = FALLBACK_LANGUAGE
+
+    region = hass_country or LANGUAGE_REGIONS.get(language) or language.upper()
+    return language, region.upper()
 
 
 def _round_to(value: float, step: float) -> str:
@@ -304,10 +340,75 @@ class MeteoERadarClient:
             },
         )
 
+    async def async_get_aqi(self, location: MeteoERadarLocation) -> dict[str, Any] | None:
+        """Indice europeo di qualita' dell'aria (1-6).
+
+        Restituisce ``None`` dove il servizio non copre la localita': in quel
+        caso il backend risponde ``204 No Content``.
+        """
+        return await self._get_web(
+            PATH_AQI,
+            {
+                "language": self._language,
+                "timezone": location.timezone,
+                "location_id": location.location_id,
+            },
+        )
+
+    async def async_get_pollen(
+        self, location: MeteoERadarLocation
+    ) -> dict[str, Any] | None:
+        """Carico pollinico a 7 giorni.
+
+        Richiede ``isoCountryCode`` (senza, il backend risponde ``400``) e
+        copre solo alcuni paesi europei; altrove risponde ``204``.
+        I nomi degli allergeni sono richiesti in inglese perche' facciano da
+        chiave stabile per gli entity_id.
+        """
+        if not location.iso_country_code:
+            return None
+        return await self._get_web(
+            PATH_POLLEN,
+            {
+                "language": POLLEN_LANGUAGE,
+                "timezone": location.timezone,
+                "location_id": location.location_id,
+                "isoCountryCode": location.iso_country_code,
+            },
+        )
+
     async def async_get_all(self, location: MeteoERadarLocation) -> dict[str, Any]:
-        """Recupera in parallelo previsione giornaliera e shortcast."""
-        daily, shortcast = await asyncio.gather(
+        """Recupera in parallelo tutti i dati della localita'.
+
+        Previsione e shortcast sono obbligatori e propagano l'eccezione;
+        qualita' dell'aria e pollini sono opzionali — non tutte le localita'
+        sono coperte — e in caso di errore diventano ``None``, lasciando al
+        coordinator il compito di conservare l'ultimo valore noto.
+        """
+        daily, shortcast, aqi, pollen = await asyncio.gather(
             self.async_get_daily(location),
             self.async_get_shortcast(location),
+            self.async_get_aqi(location),
+            self.async_get_pollen(location),
+            return_exceptions=True,
         )
-        return {"daily": daily, "shortcast": shortcast}
+
+        for result in (daily, shortcast):
+            if isinstance(result, BaseException):
+                raise result
+
+        for name, result in (("aqi", aqi), ("pollen", pollen)):
+            if isinstance(result, BaseException):
+                _LOGGER.debug(
+                    "Dati opzionali '%s' non disponibili per %s: %s",
+                    name,
+                    location.name,
+                    result,
+                )
+
+        return {
+            "daily": daily,
+            "shortcast": shortcast,
+            "aqi": None if isinstance(aqi, BaseException) else aqi,
+            "pollen": None if isinstance(pollen, BaseException) else pollen,
+        }

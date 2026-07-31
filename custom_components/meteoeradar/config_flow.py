@@ -29,6 +29,7 @@ from .api import (
     MeteoERadarConnectionError,
     MeteoERadarLocation,
     MeteoERadarNoResultsError,
+    resolve_locale,
 )
 from .const import (
     CONF_LANGUAGE,
@@ -38,6 +39,7 @@ from .const import (
     DEFAULT_LANGUAGE,
     DEFAULT_UPDATE_MINUTES,
     DOMAIN,
+    LANGUAGE_OPTIONS,
     MAX_UPDATE_MINUTES,
     MIN_UPDATE_MINUTES,
 )
@@ -68,7 +70,12 @@ class MeteoERadarConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             query = (user_input.get(CONF_QUERY) or "").strip()
-            client = MeteoERadarClient(async_get_clientsession(self.hass))
+            language, region = resolve_locale(
+                None, self.hass.config.language, self.hass.config.country
+            )
+            client = MeteoERadarClient(
+                async_get_clientsession(self.hass), language=language, region=region
+            )
 
             try:
                 if query:
@@ -147,15 +154,23 @@ class MeteoERadarOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(
-                data={CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL])}
+                data={
+                    CONF_UPDATE_INTERVAL: int(user_input[CONF_UPDATE_INTERVAL]),
+                    CONF_LANGUAGE: user_input[CONF_LANGUAGE],
+                }
             )
 
-        current = self.config_entry.options.get(
-            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_MINUTES
+        options = self.config_entry.options
+        interval = options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_MINUTES)
+        language = options.get(
+            CONF_LANGUAGE, self.config_entry.data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE)
         )
+        if language not in LANGUAGE_OPTIONS:
+            language = DEFAULT_LANGUAGE
+
         schema = vol.Schema(
             {
-                vol.Required(CONF_UPDATE_INTERVAL, default=current): NumberSelector(
+                vol.Required(CONF_UPDATE_INTERVAL, default=interval): NumberSelector(
                     NumberSelectorConfig(
                         min=MIN_UPDATE_MINUTES,
                         max=MAX_UPDATE_MINUTES,
@@ -163,7 +178,14 @@ class MeteoERadarOptionsFlow(OptionsFlow):
                         mode=NumberSelectorMode.BOX,
                         unit_of_measurement="min",
                     )
-                )
+                ),
+                vol.Required(CONF_LANGUAGE, default=language): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(LANGUAGE_OPTIONS),
+                        mode=SelectSelectorMode.DROPDOWN,
+                        translation_key="language",
+                    )
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

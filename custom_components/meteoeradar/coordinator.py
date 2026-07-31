@@ -11,8 +11,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import MeteoERadarClient, MeteoERadarError, MeteoERadarLocation
-from .const import DOMAIN
-from .symbols import is_night, to_condition
+from .const import DOMAIN, POLLEN_LEVELS
+from .symbols import cloud_cover_percent, is_night, to_condition
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -124,6 +124,8 @@ def _parse_common(entry: dict[str, Any]) -> dict[str, Any]:
         "symbol": entry.get("symbol"),
         "condition": to_condition(entry.get("symbol")),
         "is_night": is_night(entry.get("symbol")),
+        "cloud_cover": cloud_cover_percent(entry.get("symbol")),
+        "smog_level": entry.get("smog_level"),
         "humidity": _percent(entry.get("humidity")),
         "pressure": _num((entry.get("air_pressure") or {}).get("hpa")),
         "dew_point": _temperature(entry.get("dew_point")),
@@ -145,9 +147,65 @@ def _parse_current(entry: dict[str, Any]) -> dict[str, Any]:
             "apparent_temperature": _temperature(entry.get("apparent_temperature")),
             "weather_condition_image": entry.get("weather_condition_image"),
             "solar_elevation": _num(entry.get("solar_elevation")),
+            "pressure_tendency": entry.get("air_pressure_tendency_category"),
         }
     )
     return data
+
+
+def _parse_aqi(payload: Any) -> dict[str, Any] | None:
+    """Indice europeo di qualita' dell'aria, con testo e colore della scala."""
+    if not isinstance(payload, dict):
+        return None
+    current = payload.get("current")
+    if not isinstance(current, dict) or current.get("index") is None:
+        return None
+    index = _num(current.get("index"))
+    scale = payload.get("scale") or {}
+    return {
+        "index": int(index) if index is not None else None,
+        "text": current.get("text"),
+        "color": current.get("color"),
+        "source": scale.get("source"),
+    }
+
+
+def _parse_pollen(payload: Any) -> dict[str, Any] | None:
+    """Carico pollinico odierno, indicizzato per nome canonico inglese."""
+    if not isinstance(payload, dict):
+        return None
+    days = payload.get("days")
+    if not isinstance(days, list) or not days:
+        return None
+
+    today = days[0]
+    if not isinstance(today, dict):
+        return None
+
+    levels: dict[str, dict[str, Any]] = {}
+    for item in today.get("pollen") or []:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip().lower()
+        value = _num(item.get("value"))
+        if not name or value is None:
+            continue
+        levels[name] = {
+            "value": int(value),
+            "level": POLLEN_LEVELS.get(int(value)),
+        }
+
+    if not levels:
+        return None
+
+    max_burden = today.get("max_burden") or {}
+    max_value = _num(max_burden.get("value"))
+    return {
+        "date": today.get("date"),
+        "types": levels,
+        "max_name": str(max_burden.get("name") or "").strip().lower() or None,
+        "max_value": int(max_value) if max_value is not None else None,
+    }
 
 
 def _parse_hour(entry: dict[str, Any]) -> dict[str, Any]:
@@ -212,6 +270,10 @@ class MeteoERadarCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if not isinstance(current_raw, dict):
             raise UpdateFailed("Risposta shortcast priva delle condizioni attuali")
 
+        previous = self.data or {}
+        aqi = _parse_aqi(payload.get("aqi"))
+        pollen = _parse_pollen(payload.get("pollen"))
+
         return {
             "current": _parse_current(current_raw),
             "hourly": [
@@ -224,4 +286,9 @@ class MeteoERadarCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 for day in daily.get("days") or []
                 if isinstance(day, dict)
             ],
+            # Qualita' dell'aria e pollini non coprono tutte le localita' e
+            # possono fallire indipendentemente dal meteo: se mancano si tiene
+            # l'ultimo valore noto invece di far sparire i sensori.
+            "aqi": aqi if aqi is not None else previous.get("aqi"),
+            "pollen": pollen if pollen is not None else previous.get("pollen"),
         }

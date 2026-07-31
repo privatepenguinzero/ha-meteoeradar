@@ -9,11 +9,40 @@ test fallisce segnalando quali finiscono su ``exceptional``.
 from __future__ import annotations
 
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "meteoeradar"))
 
 import symbols  # noqa: E402
+
+
+def check_translations() -> list[str]:
+    """Ogni translation_key usato dai sensori deve esistere in tutte le lingue."""
+    import json
+
+    root = pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "meteoeradar"
+    src = (root / "sensor.py").read_text()
+
+    keys = set(re.findall(r'translation_key="([a-z_]+)"', src))
+    from const import POLLEN_TYPES  # noqa: PLC0415
+
+    keys |= {f"pollen_{slug}" for slug in POLLEN_TYPES}
+
+    problems: list[str] = []
+    for name in ("strings.json", "translations/en.json", "translations/it.json"):
+        data = json.loads((root / name).read_text())
+        sensors = (data.get("entity") or {}).get("sensor") or {}
+        for missing in sorted(keys - set(sensors)):
+            problems.append(f"{name}: manca entity.sensor.{missing}")
+
+        # Il sensore enum della condizione deve tradurre tutti gli stati che
+        # to_condition() puo' restituire, in ogni lingua.
+        states = set((sensors.get("condition") or {}).get("state") or {})
+        for missing in sorted(set(symbols.ALL_CONDITIONS) - states):
+            problems.append(f"{name}: manca lo stato condition '{missing}'")
+
+    return problems
 
 # I 166 codici validi dichiarati dal bundle di meteoeradar.it.
 ALL_SYMBOLS = [
@@ -104,13 +133,18 @@ def main() -> int:
             f"attese {len(ALL_SYMBOLS) // 2} varianti notturne, trovate {night_count}"
         )
 
+    failures.extend(check_translations())
+
     if failures:
         print("FALLITO:")
         for line in failures:
             print("  -", line)
         return 1
 
-    print(f"OK: {len(ALL_SYMBOLS)} codici, nessuno su 'exceptional', {night_count} notturni")
+    print(
+        f"OK: {len(ALL_SYMBOLS)} codici, nessuno su 'exceptional', "
+        f"{night_count} notturni, traduzioni complete"
+    )
     return 0
 
 

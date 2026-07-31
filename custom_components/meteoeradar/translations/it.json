@@ -28,8 +28,179 @@
       "init": {
         "title": "Opzioni",
         "data": {
-          "update_interval": "Intervallo di aggiornamento"
+          "update_interval": "Intervallo di aggiornamento",
+          "language": "Lingua dei dati"
+        },
+        "data_description": {
+          "language": "La lingua usata per il nome della località e per la descrizione della qualità dell'aria."
         }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "condition": {
+        "name": "Condizione",
+        "state": {
+          "sunny": "Soleggiato",
+          "clear-night": "Sereno",
+          "partlycloudy": "Parzialmente nuvoloso",
+          "cloudy": "Nuvoloso",
+          "fog": "Nebbia",
+          "rainy": "Pioggia",
+          "pouring": "Pioggia forte",
+          "snowy": "Neve",
+          "snowy-rainy": "Neve mista a pioggia",
+          "lightning-rainy": "Temporale",
+          "exceptional": "Eccezionale"
+        }
+      },
+      "temperature": {
+        "name": "Temperatura"
+      },
+      "apparent_temperature": {
+        "name": "Temperatura percepita"
+      },
+      "humidity": {
+        "name": "Umidità"
+      },
+      "dew_point": {
+        "name": "Punto di rugiada"
+      },
+      "pressure": {
+        "name": "Pressione"
+      },
+      "pressure_tendency": {
+        "name": "Tendenza barometrica"
+      },
+      "wind_speed": {
+        "name": "Velocità del vento"
+      },
+      "wind_gust_speed": {
+        "name": "Raffica di vento"
+      },
+      "wind_bearing": {
+        "name": "Direzione del vento"
+      },
+      "visibility": {
+        "name": "Visibilità"
+      },
+      "cloud_cover": {
+        "name": "Copertura nuvolosa"
+      },
+      "precipitation_probability": {
+        "name": "Probabilità di precipitazione"
+      },
+      "precipitation_type": {
+        "name": "Tipo di precipitazione"
+      },
+      "smog_level": {
+        "name": "Livello di smog"
+      },
+      "solar_elevation": {
+        "name": "Elevazione solare"
+      },
+      "temperature_max": {
+        "name": "Temperatura massima oggi"
+      },
+      "temperature_min": {
+        "name": "Temperatura minima oggi"
+      },
+      "uv_index": {
+        "name": "Indice UV"
+      },
+      "precipitation_today": {
+        "name": "Precipitazione oggi"
+      },
+      "sunshine_duration": {
+        "name": "Ore di sole"
+      },
+      "air_quality_index": {
+        "name": "Qualità dell'aria"
+      },
+      "pollen_alder": {
+        "name": "Polline di ontano"
+      },
+      "pollen_ash": {
+        "name": "Polline di frassino"
+      },
+      "pollen_beech": {
+        "name": "Polline di faggio"
+      },
+      "pollen_birch": {
+        "name": "Polline di betulla"
+      },
+      "pollen_chestnut": {
+        "name": "Polline di castagno"
+      },
+      "pollen_cypress": {
+        "name": "Polline di cipresso"
+      },
+      "pollen_elm": {
+        "name": "Polline di olmo"
+      },
+      "pollen_goosefoot": {
+        "name": "Polline di chenopodio"
+      },
+      "pollen_grasses": {
+        "name": "Polline di graminacee"
+      },
+      "pollen_hazel": {
+        "name": "Polline di nocciolo"
+      },
+      "pollen_hornbeam": {
+        "name": "Polline di carpino"
+      },
+      "pollen_linden": {
+        "name": "Polline di tiglio"
+      },
+      "pollen_mugwort": {
+        "name": "Polline di artemisia"
+      },
+      "pollen_nettle": {
+        "name": "Polline di ortica"
+      },
+      "pollen_oak": {
+        "name": "Polline di quercia"
+      },
+      "pollen_olive": {
+        "name": "Polline di olivo"
+      },
+      "pollen_pellitory": {
+        "name": "Polline di parietaria"
+      },
+      "pollen_pine": {
+        "name": "Polline di pino"
+      },
+      "pollen_plane": {
+        "name": "Polline di platano"
+      },
+      "pollen_plantain": {
+        "name": "Polline di piantaggine"
+      },
+      "pollen_poplar": {
+        "name": "Polline di pioppo"
+      },
+      "pollen_ragweed": {
+        "name": "Polline di ambrosia"
+      },
+      "pollen_rumex": {
+        "name": "Polline di acetosa"
+      },
+      "pollen_rye": {
+        "name": "Polline di segale"
+      },
+      "pollen_willow": {
+        "name": "Polline di salice"
+      }
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "auto": "Automatica (segue Home Assistant)",
+        "it": "Italiano",
+        "en": "Inglese"
       }
     }
   }

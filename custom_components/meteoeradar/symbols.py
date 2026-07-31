@@ -77,8 +77,38 @@ LIGHTNING_RAINY: Final = "lightning-rainy"
 EXCEPTIONAL: Final = "exceptional"
 
 
+# Tutte le condizioni che to_condition() puo' restituire: serve a dichiarare le
+# `options` del sensore enum della condizione.
+ALL_CONDITIONS: Final[tuple[str, ...]] = (
+    CLEAR_DAY,
+    CLEAR_NIGHT,
+    PARTLY_CLOUDY,
+    CLOUDY,
+    FOG,
+    RAINY,
+    POURING,
+    SNOWY,
+    SNOWY_RAINY,
+    LIGHTNING_RAINY,
+    EXCEPTIONAL,
+)
+
+
 def _base(symbol: str | None) -> str:
     return (symbol or "").strip().lower()[:2]
+
+
+def cloud_cover_percent(symbol: str | None) -> int | None:
+    """Copertura nuvolosa in percentuale, dedotta dalla classe del simbolo.
+
+    Non e' una misura: il backend classifica il cielo in cinque livelli
+    (0 / 15 / 30 / 60 / 100 %) e questo restituisce il valore corrispondente.
+    Per la nebbia e per i codici sconosciuti ritorna ``None``.
+    """
+    cover = CLOUD_COVER.get(_base(symbol))
+    if cover is None:
+        return None
+    return int(round(cover * 100))
 
 
 def _suffix(symbol: str | None) -> str:

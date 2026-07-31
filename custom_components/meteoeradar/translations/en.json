@@ -28,8 +28,179 @@
       "init": {
         "title": "Options",
         "data": {
-          "update_interval": "Update interval"
+          "update_interval": "Update interval",
+          "language": "Data language"
+        },
+        "data_description": {
+          "language": "Language used for the location name and the air quality description."
         }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "condition": {
+        "name": "Condition",
+        "state": {
+          "sunny": "Sunny",
+          "clear-night": "Clear",
+          "partlycloudy": "Partly cloudy",
+          "cloudy": "Cloudy",
+          "fog": "Fog",
+          "rainy": "Rainy",
+          "pouring": "Pouring",
+          "snowy": "Snowy",
+          "snowy-rainy": "Sleet",
+          "lightning-rainy": "Thunderstorm",
+          "exceptional": "Exceptional"
+        }
+      },
+      "temperature": {
+        "name": "Temperature"
+      },
+      "apparent_temperature": {
+        "name": "Apparent temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "dew_point": {
+        "name": "Dew point"
+      },
+      "pressure": {
+        "name": "Pressure"
+      },
+      "pressure_tendency": {
+        "name": "Pressure tendency"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      },
+      "wind_gust_speed": {
+        "name": "Wind gust"
+      },
+      "wind_bearing": {
+        "name": "Wind bearing"
+      },
+      "visibility": {
+        "name": "Visibility"
+      },
+      "cloud_cover": {
+        "name": "Cloud cover"
+      },
+      "precipitation_probability": {
+        "name": "Precipitation probability"
+      },
+      "precipitation_type": {
+        "name": "Precipitation type"
+      },
+      "smog_level": {
+        "name": "Smog level"
+      },
+      "solar_elevation": {
+        "name": "Solar elevation"
+      },
+      "temperature_max": {
+        "name": "Today's high"
+      },
+      "temperature_min": {
+        "name": "Today's low"
+      },
+      "uv_index": {
+        "name": "UV index"
+      },
+      "precipitation_today": {
+        "name": "Precipitation today"
+      },
+      "sunshine_duration": {
+        "name": "Hours of sun"
+      },
+      "air_quality_index": {
+        "name": "Air quality index"
+      },
+      "pollen_alder": {
+        "name": "Alder pollen"
+      },
+      "pollen_ash": {
+        "name": "Ash pollen"
+      },
+      "pollen_beech": {
+        "name": "Beech pollen"
+      },
+      "pollen_birch": {
+        "name": "Birch pollen"
+      },
+      "pollen_chestnut": {
+        "name": "Chestnut pollen"
+      },
+      "pollen_cypress": {
+        "name": "Cypress pollen"
+      },
+      "pollen_elm": {
+        "name": "Elm pollen"
+      },
+      "pollen_goosefoot": {
+        "name": "Goosefoot pollen"
+      },
+      "pollen_grasses": {
+        "name": "Grass pollen"
+      },
+      "pollen_hazel": {
+        "name": "Hazel pollen"
+      },
+      "pollen_hornbeam": {
+        "name": "Hornbeam pollen"
+      },
+      "pollen_linden": {
+        "name": "Linden pollen"
+      },
+      "pollen_mugwort": {
+        "name": "Mugwort pollen"
+      },
+      "pollen_nettle": {
+        "name": "Nettle pollen"
+      },
+      "pollen_oak": {
+        "name": "Oak pollen"
+      },
+      "pollen_olive": {
+        "name": "Olive pollen"
+      },
+      "pollen_pellitory": {
+        "name": "Pellitory pollen"
+      },
+      "pollen_pine": {
+        "name": "Pine pollen"
+      },
+      "pollen_plane": {
+        "name": "Plane pollen"
+      },
+      "pollen_plantain": {
+        "name": "Plantain pollen"
+      },
+      "pollen_poplar": {
+        "name": "Poplar pollen"
+      },
+      "pollen_ragweed": {
+        "name": "Ragweed pollen"
+      },
+      "pollen_rumex": {
+        "name": "Rumex pollen"
+      },
+      "pollen_rye": {
+        "name": "Rye pollen"
+      },
+      "pollen_willow": {
+        "name": "Willow pollen"
+      }
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "auto": "Automatic (follow Home Assistant)",
+        "it": "Italian",
+        "en": "English"
       }
     }
   }

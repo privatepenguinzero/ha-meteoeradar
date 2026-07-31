@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag della release da (ri)costruire, es. 1.0.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Costruisci e allega lo zip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ricava la versione dal tag
+        id: version
+        run: |
+          TAG="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '$TAG' non e' semver valido (atteso 1.2.3 o v1.2.3)"
+            exit 1
+          fi
+          echo "tag=$TAG"         >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Allinea manifest.json alla versione della release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          version = os.environ["VERSION"]
+          path = pathlib.Path("custom_components/meteoeradar/manifest.json")
+          data = json.loads(path.read_text())
+          data["version"] = version
+          path.write_text(json.dumps(data, indent=2) + "\n")
+          print(f"manifest.json -> version {version}")
+          PY
+
+      - name: Crea lo zip per HACS
+        # I file devono stare nella radice dello zip: HACS lo estrae
+        # direttamente dentro config/custom_components/meteoeradar/.
+        run: |
+          cd custom_components/meteoeradar
+          zip -r "$GITHUB_WORKSPACE/meteoeradar.zip" . -x '*__pycache__*' '*.pyc'
+          cd "$GITHUB_WORKSPACE"
+          unzip -l meteoeradar.zip
+
+      - name: Allega lo zip alla release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.version.outputs.tag }}" meteoeradar.zip --clobber
+
+      - name: Pubblica lo zip come artifact (esecuzione manuale)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: meteoeradar
+          path: meteoeradar.zip

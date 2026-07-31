@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Meteo e Radar",
+        "description": "Enter a place name, or leave the field empty to use the coordinates configured in Home Assistant.",
+        "data": {
+          "query": "Place name"
+        }
+      },
+      "location": {
+        "title": "Select the location",
+        "data": {
+          "location": "Location"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach meteoeradar.it.",
+      "no_results": "No location matches that name."
+    },
+    "abort": {
+      "already_configured": "This location is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "data": {
+          "update_interval": "Update interval"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "Meteo e Radar",
+  "country": [
+    "IT"
+  ],
+  "homeassistant": "2024.12.0",
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "meteoeradar.zip"
+}

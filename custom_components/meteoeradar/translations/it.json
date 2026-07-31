@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Meteo e Radar",
+        "description": "Inserisci il nome di una località, oppure lascia il campo vuoto per usare le coordinate configurate in Home Assistant.",
+        "data": {
+          "query": "Nome della località"
+        }
+      },
+      "location": {
+        "title": "Seleziona la località",
+        "data": {
+          "location": "Località"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile contattare meteoeradar.it.",
+      "no_results": "Nessuna località corrisponde a quel nome."
+    },
+    "abort": {
+      "already_configured": "Questa località è già configurata."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni",
+        "data": {
+          "update_interval": "Intervallo di aggiornamento"
+        }
+      }
+    }
+  }
+}

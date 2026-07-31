@@ -3,6 +3,12 @@
 Il formato segue [Keep a Changelog](https://keepachangelog.com/it/1.1.0/)
 e il versionamento è [semantico](https://semver.org/lang/it/).
 
+## [1.0.1] — 2026-07-31
+
+### Aggiunto
+- Asset di brand (icona e logo) sotto `custom_components/meteoeradar/brand/`,
+  richiesti dalla validazione HACS.
+
 ## [1.0.0] — 2026-07-31
 
 Prima release.

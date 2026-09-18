@@ -1,0 +1,14 @@
+name: Dependabot automerge
+
+# Merges Dependabot's minor and patch updates once the other checks pass.
+# The logic lives in privatepenguinzero/shared-workflows.
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    uses: privatepenguinzero/shared-workflows/.github/workflows/dependabot-automerge.yml@main
